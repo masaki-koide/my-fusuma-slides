@@ -1,0 +1,47 @@
+<!DOCTYPE html><html lang="en"><head><meta http-equiv="Content-type" content="text/html; charset=utf-8"><meta name="theme-color" content="#3498db"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="description" content="はじめてのFigma Plugin開発"><title>はじめてのFigma Plugin開発</title><meta property="og:title" content="はじめてのFigma Plugin開発"><meta property="og:type" content="article"><meta property="og:description" content="はじめてのFigma Plugin開発"><link href="vendor.6.77dc8673e2c2eebf2e42.css" rel="stylesheet"><link href="main.3.a6aacec566b1fd7e7182.css" rel="stylesheet"></head><body><div id="root"><svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" class="btn-sidebar" height="1em" width="1em" xmlns="http://www.w3.org/2000/svg"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"></path></svg><article id="webslides"><section class="aligncenter title"><h1>はじめてのFigma Plugin開発</h1><br><p>Ginza.js #4</p><br><p>09/02</p></section><section class="aligncenter section-title"><h1>自己紹介</h1><div class="card-50"><div class="flex-content"><img src="https://pbs.twimg.com/profile_images/979597254188126208/Kw_5K41V_400x400.jpg"></div><div class="flex-content"><ul class="description"><li>なまえ: こいでまさき</li><li>しごと: フロントエンドエンジニア</li><li>すきる: React/TypeScript</li><li>しゅみ: 日本語ラップ・MCバトル鑑賞</li></ul></div></div></section><section class="aligncenter section-title"><h1>Figmaって？</h1><br><div class="card-50"><img class="image size-50" src="6aa43c38ff249d48b6eddd8f2fc1c6e4.webp"><ul class="flexblock activity"><li>最近勢いのあるデザインツール</li><li>Web版・デスクトップアプリ版がある</li><li>リアルタイム共同編集やURL共有が強み</li></ul></div></section><section class="aligncenter"><h1>じゃあFigma Pluginって？</h1><ul class="flexblock activity"><li>これまでもブラウザの拡張機能やWeb APIはあった</li><li>Figmaのsandbox内で動作するのがPlugin</li><li>2019年8月にリリースされたばかり</li></ul></section><section class="aligncenter"><h1>神々のPlugin</h1><ul class="flexblock activity"><li>Googleスプレッドシートのデータを一発で埋め込むやーつ<br><a href="https://twitter.com/DavidWilliames/status/1156503669707161600">https://twitter.com/DavidWilliames/status/1156503669707161600</a></li><li>ディープラーニングで写真から人を消すやーつ<br><a href="https://twitter.com/matamalaortiz/status/1163551129956954113">https://twitter.com/matamalaortiz/status/1163551129956954113</a></li></ul></section><section class="aligncenter"><h1>なんでFigma Pluginに興味を持ったか</h1><ul class="flexblock activity"><li>TypeScriptで書ける(型がある世界最高)👍</li><li>業務で使ってるし、最近勢いがある👍</li><li>動作の仕組みやデバッグ環境が面白い👍</li></ul></section><section class="aligncenter section-title"><h1>Pluginの仕組み</h1><img class="image size-70" src="https://static.figma.com/uploads/04c4c6293fce2a7fe67bccd385ee5ab998705780"><p><a href="https://www.figma.com/plugin-docs/how-plugins-run/">How Plugins Run - Figma Developers</a></p></section><section class="aligncenter"><h1>ファイル構成</h1><br><p>基本的に<code>code.ts</code>と<code>ui.html</code>を編集していく</p><br><pre><code>.
+├── README.md
+├── code.js
+├── code.ts
+├── figma.d.ts
+├── manifest.json
+├── tsconfig.json
+├── ui.html
+</code></pre></section><section class="aligncenter"><img class="image size-40" src="a16a78add7a1c6395056cf2193ac5213.webp"></section><section class="aligncenter"><h1>36行で書いたプラグイン(DEMO)</h1></section><section class="aligncenter"><pre><code class="language-javascript">// ui.html
+&lt;p&gt;&lt;input id=&quot;text&quot; /&gt; &lt;button id=&quot;zoom&quot;&gt;Zoom Text&lt;/button&gt;&lt;/p&gt;
+&lt;p id=&quot;message&quot;&gt;&lt;/p&gt;
+&lt;p&gt;&lt;button id=&quot;close&quot;&gt;Close Plugin&lt;/button&gt;&lt;/p&gt;
+
+&lt;script&gt;
+  document.getElementById(&#x27;zoom&#x27;).onclick = () =&gt; {
+    const textbox = document.getElementById(&#x27;text&#x27;)
+    const query = textbox.value
+    parent.postMessage({ pluginMessage: { type: &#x27;zoom&#x27;, query } }, &#x27;*&#x27;)
+  }
+  document.getElementById(&#x27;close&#x27;).onclick = () =&gt; {
+    parent.postMessage({ pluginMessage: { type: &#x27;close&#x27; } }, &#x27;*&#x27;)
+  }
+  onmessage = event =&gt; {
+    const message = document.getElementById(&#x27;message&#x27;)
+    message.textContent = event.data.pluginMessage
+  }
+&lt;/script&gt;
+</code></pre></section><section class="aligncenter"><pre><code class="language-javascript">// code.ts
+figma.showUI(__html__)
+
+figma.ui.onmessage = msg =&gt; {
+  if (msg.type === &#x27;zoom&#x27;) {
+    const searchNode = figma.currentPage.findOne(node =&gt; {
+      return node.type === &#x27;TEXT&#x27; &amp;&amp; node.characters === msg.query
+    })
+    
+    if (searchNode) {
+      figma.viewport.scrollAndZoomIntoView([searchNode])
+      figma.ui.postMessage(&#x27;お探しのテキストが見つかりました👍&#x27;)
+    } else {
+      figma.ui.postMessage(&#x27;お探しのテキストは見つかりませんでした👎&#x27;)
+    }
+  } else if (msg.type === &#x27;close&#x27;) {
+    figma.closePlugin()
+  }
+}
+</code></pre></section><section class="aligncenter section-title"><h1>発展として...</h1><br><p>普段のWeb開発のスキルがゴリゴリ使えて夢が広がる✨</p><br><ul class="flexblock activity"><li>ビルドツールを使って複数ファイル構成</li><li>ReactやVueで複雑なUIを構成</li><li>外部APIとのコラボレーション</li></ul></section><section class="aligncenter"><h1>ありがとうございました</h1></section><section class="aligncenter"><h1>参考にさせていただいたもの</h1><br><ul><li><a href="https://www.figma.com/plugin-docs/intro/">introduction - Figma Developers</a></li><li><a href="https://github.com/figma/plugin-samples">figma/plugin-samples</a></li><li><a href="https://note.mu/fjkn/n/n125c25962ba6">FigmaにPluginがついに来たのでよさそうなものをご紹介</a></li><li><a href="https://speakerdeck.com/takanorip/making-figma-plugins-with-typescript">Figma Pluginを作ろう！</a></li></ul></section></article></div><script type="text/javascript" src="runtime.87b3cd4db83cb74b57d2.bundle.js"></script><script type="text/javascript" src="vendor.6.77dc8673e2c2eebf2e42.bundle.js"></script><script type="text/javascript" src="main.3.a6aacec566b1fd7e7182.bundle.js"></script></body></html>
