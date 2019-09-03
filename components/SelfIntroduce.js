@@ -8,7 +8,7 @@ export const SelfIntroduce = () => (
     }
     right={
       <ul class="description">
-        <li>なまえ: こいでまさき</li>
+        <li>なまえ: <a href="https://twitter.com/markey_koichan">markey</a></li>
         <li>しごと: フロントエンドエンジニア</li>
         <li>すきる: React/TypeScript</li>
         <li>しゅみ: 日本語ラップ・MCバトル鑑賞</li>
